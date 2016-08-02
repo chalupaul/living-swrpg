@@ -1,0 +1,19 @@
+{
+  "name": "lswrpg",
+  "version": "1.0.0",
+  "description": "living star wars rpg api",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0",
+    "js-yaml": "^3.6.1",
+    "morgan": "^1.7.0",
+    "steeltoe": "^1.0.1",
+    "winston": "^2.2.0"
+  }
+}
