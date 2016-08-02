@@ -1,6 +1,6 @@
 {
 	"server": {
 		"port": 3000,
-		"logfile": "./logs/tust/tarp/all-logs.log"
+		"logfile": "./logs/all-logs.log"
 	}
 }
