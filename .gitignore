@@ -38,3 +38,4 @@ jspm_packages
 
 # No need to add database passwords to git
 config.json
+.DS_Store
