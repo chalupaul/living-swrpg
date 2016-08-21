@@ -19,5 +19,5 @@ function start_server() {
 	fi
 	[[ -f .nvmrc ]] && nvm use
 	npm install
-	nodemon init.js
+        node_modules/nodemon/bin/nodemon.js init.js
 }

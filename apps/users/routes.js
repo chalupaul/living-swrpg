@@ -3,11 +3,11 @@ const controllers = require('./controllers');
 const routes = require('express').Router();
 
 routes.get('/', (req, res) => {
-  res.status(200).json({ message: 'In Auth Routes!' });
+  res.status(200).json({ message: 'In Users Routes!' });
 });
 
 routes.get('/blue', (req, res) => {
-  res.status(200).json({ message: 'In Auth Blue!' });
+  res.status(200).json({ message: 'In Users Blue!' });
 });
 
 routes.get('/trump', controllers.trump);

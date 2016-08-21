@@ -17,7 +17,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 
-app.use('/auth', apps.auth.routes);
+app.use('/users', apps.users.routes);
 
 
 var port = util.config.get('server.port')? Number(util.config.get('server.port')) : 3000;
