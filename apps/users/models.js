@@ -1,4 +1,3 @@
-var UserModel = {}
 var UserSchema = {
 	"$schema": "http://json-schema.org/draft-04/schema#",
 	"id": "http://localhost:3000/users/schema.json",
@@ -86,7 +85,6 @@ var UserSchema = {
 
 module.exports = {
 	user: {
-		schema: UserSchema,
-		model: UserModel
+		schema: UserSchema
 	}
 }

@@ -1,15 +1,16 @@
-const models = require('./models');
-const controllers = require('./controllers');
-const router = require('express').Router();
+var models = require('./models');
+var controllers = require('./controllers');
+var router = require('express').Router();
+var util = rootRequire('util');
 var validate = require('jsonschema').validate;
 var format = require('json-format');
 var Ajv = require('ajv')
 
 var ajv = new Ajv({ useDefaults: true }); 
+var logger = util.logger.logger
+
  
 router.get('/schema.json', (req, res) => {
-	//console.log(prettyjson.render(models.user.userSchema))
-	//res.status(200).json(models.user.userSchema);
 	res.set('Content-Type', 'application/json')
 	res.status(200).send(format(models.user.schema))
 });
@@ -23,7 +24,7 @@ router.post('/', (req, res) => {
 	var data = req.body;
 	var schema = models.user.schema;
 	valid = ajv.validate(schema, data)
-	
+	logger.debug(data)
 	res.status(200).send(data)
 });
 

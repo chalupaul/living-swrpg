@@ -1,6 +1,6 @@
-const app = require('express')();
-const util = require('./util');
-const apps = require('./apps');
+var app = require('express')();
+var util = rootRequire('util');
+var apps = rootRequire('apps');
 
 //////////////////
 // General setup

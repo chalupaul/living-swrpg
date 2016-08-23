@@ -1,3 +1,9 @@
+// Set up root include path
+var path = require('path')
+global.rootRequire = function(name) {
+    return require(__dirname + path.sep + name);
+}
+
 var cluster = require('cluster');
 
 if (cluster.isMaster) {
