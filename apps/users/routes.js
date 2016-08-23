@@ -1,16 +1,31 @@
 const models = require('./models');
 const controllers = require('./controllers');
-const routes = require('express').Router();
+const router = require('express').Router();
+var validate = require('jsonschema').validate;
+var format = require('json-format');
+var Ajv = require('ajv')
 
-routes.get('/', (req, res) => {
-  res.status(200).json({ message: 'In Users Routes!' });
+var ajv = new Ajv({ useDefaults: true }); 
+ 
+router.get('/schema.json', (req, res) => {
+	//console.log(prettyjson.render(models.user.userSchema))
+	//res.status(200).json(models.user.userSchema);
+	res.set('Content-Type', 'application/json')
+	res.status(200).send(format(models.user.schema))
 });
 
-routes.get('/blue', (req, res) => {
-  res.status(200).json({ message: 'In Users Blue!' });
+router.get('/blue', (req, res) => {
+  	res.status(200).json({ message: 'In Users Blue!' });
 });
 
-routes.get('/trump', controllers.trump);
+
+router.post('/', (req, res) => {
+	var data = req.body;
+	var schema = models.user.schema;
+	valid = ajv.validate(schema, data)
+	
+	res.status(200).send(data)
+});
 
 
-module.exports = routes;
+module.exports = router;
