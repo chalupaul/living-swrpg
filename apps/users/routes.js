@@ -20,12 +20,13 @@ router.get('/blue', (req, res) => {
 });
 
 
-router.post('/', (req, res) => {
-	var data = req.body;
-	var schema = models.user.schema;
-	valid = ajv.validate(schema, data)
-	logger.debug(data)
-	res.status(200).send(data)
+
+router.post('/', controllers.validateUser, function(req, res) {
+	var numbers = new Array(10);
+	for (var i = 0; i < numbers.length; i++) {
+	    numbers[i] = controllers.generateUpi()
+	}
+	res.status(200).send({"numbers": numbers})
 });
 
 

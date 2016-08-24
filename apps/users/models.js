@@ -1,4 +1,5 @@
 var UserSchema = {
+	"$async": true,
 	"$schema": "http://json-schema.org/draft-04/schema#",
 	"id": "http://localhost:3000/users/schema.json",
 	"title": "Living Star Wars User Object",
