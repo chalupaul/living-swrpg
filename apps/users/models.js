@@ -22,9 +22,8 @@ var UserSchema = {
 			"description": "Email Address",
 		},
 		"upi": {
-			"type": "number",
-			"maximum": 999999999999,
-			"minimum": 111111111111,
+			"type": "string",
+			"pattern": "^[0-9]{3}-[0-9]{3}-[0-9]{3}-[0-9]{3}",
 			"description": "12 digit unique player identifier",
 		},
 		"birthDate": {
@@ -45,9 +44,9 @@ var UserSchema = {
 			"maxLength": 24,
 			"description": "Your login name",
 		},
-		"passwordHash": {
+		"password": {
 			"type": "string",
-			"description": "Hashed value of password",
+			"description": "Overloaded for both plain and hashed value of password",
 		},
 		"homeRegion": {
 			"enum": [
@@ -80,7 +79,7 @@ var UserSchema = {
 		}
 	},
 	"required": [
-		"firstName", "lastName", "emailAddress", "upi", "birthDate", "language", "loginName", "passwordHash", "homeRegion"
+		"firstName", "lastName", "emailAddress", "birthDate", "language", "loginName", "password", "homeRegion"
 	]
 }
 

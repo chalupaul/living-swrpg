@@ -1,4 +1,7 @@
 var models = require('./models');
+var util = rootRequire('util');
+
+bcrypt = require('bcrypt-nodejs');
 
 var Ajv = require('ajv');
 var ajv = new Ajv({ useDefaults: true, loadSchema: loadSchema });
@@ -20,24 +23,46 @@ function validateUser(req, res, next) {
 
 	ajv.compileAsync(schema, function (err, validate) {
 		if (err) {
-			console.log('Failed to compile schema. This is a bug.', schema);
-			next(err);
+			console.error('Failed to compile schema. This is a bug.', schema);
+			return next(err);
 		}
 		validate(req.body)
 		.then(function (valid) {
-			console.log(req.body);
-			next();
+			return next();
 		})
 		.catch(function (err) {
-			if (!(err instanceof Ajv.ValidationError)) throw err;
-			// data is invalid
-			console.log('Validation errors:', err.errors);
-			next();
+			err.name = 'ValidationError';
+			err.scope = 'swrpg';
+			err.statusCode = 400;
+			err.error = err.errors[0];
+			return next(err);
 		});
 	})
 }
 
-// Generates a upi number (12 digit number)
+
+// Create user objects and persist them in the database.
+function createUser(req, res, next) {
+	return new Promise(function(resolve, reject) {
+		resolve(req.body)
+	})
+	.then(hashUserPassword)
+	.then(function(user) {
+		user['upi'] = generateUpi()[0];
+		return(user);
+	}).then(function(user) {
+		req.body = user;
+		next();
+	}).catch(function(err) {
+		next(err);
+	})
+	// TODO: save to db
+}
+
+// Generates a upi number (12 digit number).
+// Returns 2 forms in an array the first value is the int
+// thta is generated, the second value is a - seperated list
+// like 123-456-789-012
 function generateUpi() {
 	var numDigits = 12;
 	var numbers = new Array(numDigits);
@@ -54,16 +79,40 @@ function generateUpi() {
 		return makeSlice(idx+3, original, result);
 	}
 	upi = makeSlice(0, numbers, []);
-	return upi.join('-');
+	return [parseInt(numbers.join('')), upi.join('-')];
 }
 
-// Create password hash
-function hashPassword(password) {
-	
+// Create promise chain to hash a user's raw password. Used during user creation.
+function hashUserPassword(user) {
+	return new Promise(function(resolve, reject) {
+		bcrypt.hash(user['password'], null, null, function(err, hash) {
+			if (err) {
+				console.error("Failed to hash a password", err)
+				reject(err);
+			} else {
+				user['password'] = hash;
+				resolve(user)
+			}
+		})
+	})
+}
+
+// Returns a promise with a boolean if an entered password matches a hash.
+function matchPassword(password, hash) {
+	return new Promise(function(resolve, reject) {
+		bcrypt.compare(password, hash, function(err, res) {
+			if (res) {
+				resolve(res);
+			} else {
+				// TODO: make this throw a bad password error
+				reject(res);
+			}
+		})
+	})
 }
 
 module.exports = {
 	validateUser: validateUser,
-	generateUpi: generateUpi
+	createUser: createUser
 }
 

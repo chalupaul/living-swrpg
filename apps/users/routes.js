@@ -19,14 +19,23 @@ router.get('/blue', (req, res) => {
   	res.status(200).json({ message: 'In Users Blue!' });
 });
 
-
-
-router.post('/', controllers.validateUser, function(req, res) {
-	var numbers = new Array(10);
-	for (var i = 0; i < numbers.length; i++) {
-	    numbers[i] = controllers.generateUpi()
+router.post('/', 
+	controllers.validateUser, 
+	controllers.createUser, 
+	function(req, res) {
+		res.status(200).json(req.body);
 	}
-	res.status(200).send({"numbers": numbers})
+);
+
+
+router.use(function(err, req, res, next) {
+	if (err.hasOwnProperty('scope') && err.scope == 'swrpg') {
+		res.status(err.statusCode).json(err.error);
+	} else {
+		console.error(err);
+		// Don't let users see anything they shouldn't.
+		res.status(500).json({"message":"An unknown error has occured."})
+	}
 });
 
 
