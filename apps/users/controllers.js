@@ -1,6 +1,6 @@
 var models = require('./models');
-var util = rootRequire('util');
 var async = require('async');
+var lib = rootRequire('lib');
 
 
 bcrypt = require('bcrypt-nodejs');
@@ -21,7 +21,7 @@ function loadSchema(uri, callback) {
 
 // Fetches user from db
 function getUser(req, res, next) {
-	new Promise(function(resolve, reject) {
+	return new Promise(function(resolve, reject) {
 		var upi = req.params.upi;
 		var User = models.user.model;
 		User.findOne({'upi':upi}, function(err, user) {
@@ -45,7 +45,7 @@ function getUser(req, res, next) {
 	.then(function(user) {
 		//get baked user vars
 		user.getUserSafe(function(err, safeVals) {
-			req.user = safeVals;
+			res.locals.user = safeVals;
 			next();
 		});
 	})
@@ -114,7 +114,7 @@ function createUser(req, res, next) {
 	}).then(function(user) {
 		//get baked user vars
 		user.getUserSafe(function(err, safeVals) {
-			req.body = safeVals;
+			res.locals.user = safeVals;
 			next();
 		});
 	}).catch(function(err) {
@@ -131,6 +131,7 @@ function userAuthenticate(req, res, next) {
 		var user = User.findOne({"loginName":loginName, "_adminDisabled": false, "_verified": true}, function(err, user) {
 			if (err) {reject(err);}
 			if (user == null) {
+				// boolean false
 				reject(false);
 			} else {
 				resolve(user);
@@ -144,36 +145,38 @@ function userAuthenticate(req, res, next) {
 				if (res) {
 					resolve(user);
 				} else {
+					// boolean false
 					reject(res);
 				}
 			})
 		})
 	}).then(function(user) {
 		user.getUserSafe(function(err, safeVals) {
-			req.user = user;
-			req.token = "YAY";
-			next();
+			return new Promise(function(resolve, reject) {
+				res.locals.user = safeVals;
+				lib.jwt.sign(res.locals.user, function(err, token) {
+					if (err) {reject(err);}
+					res.locals.token = token;
+					next();
+				})
+			})
 		})
 	}).catch(function(err) {
 		if (err == false) {
 			// False is either "couldnt find this user", "user is unverified/disabled", or "bad password"
-			var error = new Error('Username or Password incorrect.');
-			error.scope = 'swrpg';
-			error.name = 'AuthenticationError';
-			error.statusCode = 401;
-			error.error = {
-				"message": error.message,
+			err = new Error('Username or Password incorrect.');
+			err.scope = 'swrpg';
+			err.name = 'AuthenticationError';
+			err.statusCode = 401;
+			err.error = {
+				"message": err.message,
 				"request": {
 					"loginName": req.body.loginName,
 					"password": '********'
 				}
 			}
-			next(error);
-
-		} else {
-			// Must have something 500ish in there.
-			next(err);
 		}
+		next(err);
 	});
 	
 }

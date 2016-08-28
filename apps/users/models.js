@@ -98,33 +98,38 @@ var UserSchema = {
 
 var refs = {};
 
+// Make sure you strip out internal fields that users aren't supposed to see
+// Anything that starts with _ gets pulled out of the view. Doesn't change 
+// the inside, this creates a pojo from a mongoose user model.
+//
+// This function is embedded inside User.methods
+var getUserSafe = function(CallBack) {
+	var safeReturn = {};
+	var paths = this.schema.paths;
+	var obj = this;
+	async.each(
+		Object.keys(paths), 
+		function(pathName, callback) {
+			publicVal = pathName.startsWith('_') ? false : true;
+			if (publicVal) {
+				// Rather than send the hash back to them (which has the seed),
+				// strip it and send back '********'.
+				var oldVal = (pathName == 'password') ? '********' : obj[pathName];
+				safeReturn[pathName] = oldVal;
+			}
+			callback(null);
+	}, function(err) {
+		CallBack(err, safeReturn);
+	});
+};
+
 var getModel = function() {
 	var mongooseSchema = createMongooseSchema(refs, UserSchema);
 	mongooseSchema.upi.index = true;
 	mongooseSchema.loginName.index = true;
 	var Schema = new mongoose.Schema(mongooseSchema);
-	// Make sure you strip out internal fields that users aren't supposed to see
-	// Anything that starts with _ gets pulled out of the view. Doesn't change 
-	// the inside, this creates a pojo from a mongoose user model.
-	Schema.methods.getUserSafe = function(CallBack) {
-		var safeReturn = {};
-		var paths = this.schema.paths;
-		var obj = this;
-		async.each(
-			Object.keys(paths), 
-			function(pathName, callback) {
-				publicVal = pathName.startsWith('_') ? false : true;
-				if (publicVal) {
-					// Rather than send the hash back to them (which has the seed),
-					// strip it and send back '********'.
-					var oldVal = (pathName == 'password') ? '********' : obj[pathName];
-					safeReturn[pathName] = oldVal;
-				}
-				callback(null);
-		}, function(err) {
-			CallBack(err, safeReturn);
-		});
-	};
+	// load functions
+	Schema.methods.getUserSafe = getUserSafe;
 	return mongoose.model('User', Schema)
 }
 

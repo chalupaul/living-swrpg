@@ -1,13 +1,13 @@
 var models = require('./models');
 var controllers = require('./controllers');
 var router = require('express').Router();
-var util = rootRequire('util');
+var lib = rootRequire('lib');
 var validate = require('jsonschema').validate;
 var format = require('json-format');
 var Ajv = require('ajv')
 
 var ajv = new Ajv({ useDefaults: true }); 
-var logger = util.logger.logger
+var logger = lib.logger.logger
 
  
 router.get('/schema.json', (req, res) => {
@@ -23,21 +23,27 @@ router.post('/',
 	controllers.validateUser, 
 	controllers.createUser, 
 	function(req, res) {
-		res.status(200).json(req.body);
+		res.status(200).json(res.locals.user);
 	}
 );
 
 router.get('/:upi',
+	lib.jwt.jwtMiddleware,
+	function(req, res, next) {
+		res.locals.requiredRoles = ['user'];
+		next();
+	},
+	lib.rbac.authzMiddleware,
 	controllers.getUser,
 	function(req, res) {
-		res.status(200).json(req.user);
+		res.status(200).send(res.locals.user);
 	}
 )
 
 router.post('/auth',
 	controllers.userAuthenticate,
 	function(req, res) {
-		res.status(200).json(req.token);
+		res.status(200).json(res.locals.token);
 	}
 )
 

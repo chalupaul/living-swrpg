@@ -1,7 +1,8 @@
 {
 	"server": {
 		"port": 3000,
-		"logfile": "./logs/all-logs.log"
+		"logfile": "./logs/all-logs.log",
+		"tokenSecret": "Change me!"
 	},
 	"database": {
 		"uri": "mongodb://127.0.0.1:27017/swrpg"
