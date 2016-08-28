@@ -11,12 +11,15 @@
   "repository": "https://github.com/chalupaul/living-swrpg",
   "dependencies": {
     "ajv": "^4.5.0",
+    "async": "^2.0.1",
     "bcrypt-nodejs": "0.0.3",
     "body-parser": "^1.15.2",
     "co": "^4.6.0",
     "express": "^4.14.0",
     "js-yaml": "^3.6.1",
     "json-format": "^0.1.2",
+    "json-schema-to-mongoose": "^0.2.2",
+    "jsonwebtoken": "^7.1.9",
     "mkdirp": "^0.5.1",
     "morgan": "^1.7.0",
     "path": "^0.12.7",
@@ -24,6 +27,7 @@
     "winston": "^2.2.0"
   },
   "devDependencies": {
+    "blocked": "^1.2.1",
     "nodemon": "^1.10.2"
   }
 }

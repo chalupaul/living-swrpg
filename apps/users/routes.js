@@ -27,6 +27,19 @@ router.post('/',
 	}
 );
 
+router.get('/:upi',
+	controllers.getUser,
+	function(req, res) {
+		res.status(200).json(req.user);
+	}
+)
+
+router.post('/auth',
+	controllers.userAuthenticate,
+	function(req, res) {
+		res.status(200).json(req.token);
+	}
+)
 
 router.use(function(err, req, res, next) {
 	if (err.hasOwnProperty('scope') && err.scope == 'swrpg') {

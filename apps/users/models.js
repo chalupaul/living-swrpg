@@ -1,3 +1,7 @@
+var createMongooseSchema = require('json-schema-to-mongoose');
+var mongoose = require('mongoose');
+var async = require('async');
+
 var UserSchema = {
 	"$async": true,
 	"$schema": "http://json-schema.org/draft-04/schema#",
@@ -22,8 +26,7 @@ var UserSchema = {
 			"description": "Email Address",
 		},
 		"upi": {
-			"type": "string",
-			"pattern": "^[0-9]{3}-[0-9]{3}-[0-9]{3}-[0-9]{3}",
+			"type": "number",
 			"description": "12 digit unique player identifier",
 		},
 		"birthDate": {
@@ -47,6 +50,16 @@ var UserSchema = {
 		"password": {
 			"type": "string",
 			"description": "Overloaded for both plain and hashed value of password",
+		},
+		"_verified": {
+			"type": "boolean",
+			"default": false,
+			"description": "Signup complete, email verified."
+		},
+		"_adminDisabled": {
+			"type": "boolean",
+			"default": false,
+			"description": "Account disabled."
 		},
 		"homeRegion": {
 			"enum": [
@@ -83,8 +96,42 @@ var UserSchema = {
 	]
 }
 
+var refs = {};
+
+var getModel = function() {
+	var mongooseSchema = createMongooseSchema(refs, UserSchema);
+	mongooseSchema.upi.index = true;
+	mongooseSchema.loginName.index = true;
+	var Schema = new mongoose.Schema(mongooseSchema);
+	// Make sure you strip out internal fields that users aren't supposed to see
+	// Anything that starts with _ gets pulled out of the view. Doesn't change 
+	// the inside, this creates a pojo from a mongoose user model.
+	Schema.methods.getUserSafe = function(CallBack) {
+		var safeReturn = {};
+		var paths = this.schema.paths;
+		var obj = this;
+		async.each(
+			Object.keys(paths), 
+			function(pathName, callback) {
+				publicVal = pathName.startsWith('_') ? false : true;
+				if (publicVal) {
+					// Rather than send the hash back to them (which has the seed),
+					// strip it and send back '********'.
+					var oldVal = (pathName == 'password') ? '********' : obj[pathName];
+					safeReturn[pathName] = oldVal;
+				}
+				callback(null);
+		}, function(err) {
+			CallBack(err, safeReturn);
+		});
+	};
+	return mongoose.model('User', Schema)
+}
+
+
 module.exports = {
 	user: {
-		schema: UserSchema
+		schema: UserSchema,
+		model: getModel()
 	}
 }

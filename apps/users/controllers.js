@@ -1,5 +1,7 @@
 var models = require('./models');
 var util = rootRequire('util');
+var async = require('async');
+
 
 bcrypt = require('bcrypt-nodejs');
 
@@ -15,6 +17,41 @@ function loadSchema(uri, callback) {
         else
             callback(null, body);
     });
+}
+
+// Fetches user from db
+function getUser(req, res, next) {
+	new Promise(function(resolve, reject) {
+		var upi = req.params.upi;
+		var User = models.user.model;
+		User.findOne({'upi':upi}, function(err, user) {
+			if (err) {reject(err);}
+			if (user == null) {
+				err = new Error('User not found.');
+				err.name = 'UserError';
+				err.statusCode = 404;
+				err.scope= 'swrpg';
+				err.error = {
+					"request": {
+						"upi": req.params.upi
+					},
+					"message": err.message
+				}
+				reject(err);
+			}
+			resolve(user);
+		});
+	})
+	.then(function(user) {
+		//get baked user vars
+		user.getUserSafe(function(err, safeVals) {
+			req.user = safeVals;
+			next();
+		});
+	})
+	.catch(function(err) {
+		next(err);
+	});
 }
 
 // Validates user objects against json schema. Note: This doesn't create uuids or things like that.
@@ -43,43 +80,169 @@ function validateUser(req, res, next) {
 
 // Create user objects and persist them in the database.
 function createUser(req, res, next) {
-	return new Promise(function(resolve, reject) {
+	new Promise(function(resolve, reject) {
+		// pop off user vars
 		resolve(req.body)
 	})
+	.then(ensureUniqueLogin)
 	.then(hashUserPassword)
+	.then(generateUpi)
 	.then(function(user) {
-		user['upi'] = generateUpi()[0];
-		return(user);
+		// Load mongoose model
+		// Takes in a req body user request (pojo)
+		// outputs mongoose model with populated data
+		return new Promise(function(resolve, reject) {
+			var User = models.user.model;
+			u = new User(user);
+			resolve(u);
+		});
+	}).then(function(user){
+		// Save user
+		// Takes in a mongoose model of a user
+		// Outputs a mongoose document instance of a user
+		return new Promise(function(resolve, reject) {
+			var User = models.user.model;
+			u = new User(user);
+			u.save(function(error, object, numAffected) {
+				if (error) {
+					reject(error);
+				} else {
+					resolve(object);
+				}
+			})
+		})
 	}).then(function(user) {
-		req.body = user;
-		next();
+		//get baked user vars
+		user.getUserSafe(function(err, safeVals) {
+			req.body = safeVals;
+			next();
+		});
 	}).catch(function(err) {
 		next(err);
 	})
-	// TODO: save to db
 }
 
-// Generates a upi number (12 digit number).
-// Returns 2 forms in an array the first value is the int
-// thta is generated, the second value is a - seperated list
-// like 123-456-789-012
-function generateUpi() {
-	var numDigits = 12;
-	var numbers = new Array(numDigits);
-	var randomIntInc = function(low, high) {
-	    return Math.floor(Math.random() * (high - low + 1) + low);
-	}
-	for (var i = 0; i < numbers.length; i++) {
-	    numbers[i] = randomIntInc(1,9);
-	}
-	var makeSlice = function(idx, original, result) {
-		if (idx >= numDigits) return result;
-		current = numbers.slice(idx, idx+3).join('');
-		result.push(current);
-		return makeSlice(idx+3, original, result);
-	}
-	upi = makeSlice(0, numbers, []);
-	return [parseInt(numbers.join('')), upi.join('-')];
+// Makes sure a user is authd and add his jwt key
+function userAuthenticate(req, res, next) {
+	var loginName = req.body.loginName;
+	var password = req.body.password;
+	return new Promise(function(resolve, reject) {
+		var User = models.user.model;
+		var user = User.findOne({"loginName":loginName, "_adminDisabled": false, "_verified": true}, function(err, user) {
+			if (err) {reject(err);}
+			if (user == null) {
+				reject(false);
+			} else {
+				resolve(user);
+			}
+		})
+	}).then(function(user) {
+		var hash = user['password'];
+		return new Promise(function(resolve, reject) {
+			bcrypt.compare(password, hash, function(err, res) {
+				if (err) { reject(err);}
+				if (res) {
+					resolve(user);
+				} else {
+					reject(res);
+				}
+			})
+		})
+	}).then(function(user) {
+		user.getUserSafe(function(err, safeVals) {
+			req.user = user;
+			req.token = "YAY";
+			next();
+		})
+	}).catch(function(err) {
+		if (err == false) {
+			// False is either "couldnt find this user", "user is unverified/disabled", or "bad password"
+			var error = new Error('Username or Password incorrect.');
+			error.scope = 'swrpg';
+			error.name = 'AuthenticationError';
+			error.statusCode = 401;
+			error.error = {
+				"message": error.message,
+				"request": {
+					"loginName": req.body.loginName,
+					"password": '********'
+				}
+			}
+			next(error);
+
+		} else {
+			// Must have something 500ish in there.
+			next(err);
+		}
+	});
+	
+}
+
+// Checks to make sure a login name is unique.
+function ensureUniqueLogin(user) {
+	return new Promise(function(resolve, reject) {
+		var User = models.user.model;
+		User.count({'loginName': user.loginName}, function(err, count) {
+			if (err) {reject(err);}
+			if (count != 0) {
+				err = new Error('Login name already taken.');
+				err.statusCode = 400;
+				err.name = 'ValidationError';
+				err.scope = 'swrpg';
+				err.statusCode = 400;
+				err.error = {
+					"dataPath": ".loginName",
+					"keyword": "required",
+					"message": err.message,
+					"schemaPath": "#/required"
+				};
+				reject(err);
+			} else {
+				resolve(user);
+			}
+		})
+	})
+}
+
+// Generates a upi number (12 digit number). Ensures the number is unique in the database.
+function generateUpi(user) {
+	return new Promise(function(resolve, reject) {
+		// Generator pumps out UPIs
+		var upiGenerator = function* (){
+			var numDigits = 12;
+			while (true) {
+				var numbers = [];
+				// This for loop is just 12 single digit numbers, so I feel like
+				// its ok for it to be sync. 
+				for (i = 0; i < numDigits; i++) {
+					var number = Math.floor(Math.random() * 10);
+					numbers.push(number);
+				}
+				yield(Number(numbers.join('')));
+			}
+		}();
+		
+		var User = models.user.model;
+		
+		// Curried function. Pass the callback to child function calls until a good
+		// UPI holds up. In reality, there will likely never be a conflict.
+		var upiUnique = function(upi,cb) {
+			User.count({'upi':upi}, function(err, count) {
+				if (err) {reject(err);}
+				if (count != 0) {
+					console.debug("Amazing, a duplicate ID was generated!", upi)
+					upiUnique(upiGenerator.next().value,cb);
+				} else {
+					cb(null, upi);
+				}
+			})
+		}
+		// Here's the actual "do work" call
+		upiUnique(upiGenerator.next().value, function(err, upi) {
+			user['upi'] = upi;
+			resolve(user);
+		})
+	});
 }
 
 // Create promise chain to hash a user's raw password. Used during user creation.
@@ -97,22 +260,10 @@ function hashUserPassword(user) {
 	})
 }
 
-// Returns a promise with a boolean if an entered password matches a hash.
-function matchPassword(password, hash) {
-	return new Promise(function(resolve, reject) {
-		bcrypt.compare(password, hash, function(err, res) {
-			if (res) {
-				resolve(res);
-			} else {
-				// TODO: make this throw a bad password error
-				reject(res);
-			}
-		})
-	})
-}
-
 module.exports = {
 	validateUser: validateUser,
+	getUser: getUser,
+	userAuthenticate: userAuthenticate,
 	createUser: createUser
 }
 

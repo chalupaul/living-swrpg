@@ -1,5 +1,8 @@
 // Set up root include path
 var path = require('path')
+global.getRootPath = function() {
+	return __dirname;
+}
 global.rootRequire = function(name) {
     return require(__dirname + path.sep + name);
 }
