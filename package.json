@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "node_modules/mocha/bin/mocha apps/users/test",
-    "start-mongo": "mongod --config /usr/local/etc/mongod.conf",
-    "start": " source $HOME/.bash_profile; [[ -f .nvmrc ]] && nvm use; NODE_ENV=development node_modules/nodemon/bin/nodemon.js init.js"
+    "mongo": "mongod --config /usr/local/etc/mongod.conf",
+    "start": "[[ -f $HOME/.bash_profile ]] && source $HOME/.bash_profile; [[ -f .nvmrc ]] && nvm use; NODE_ENV=development node_modules/nodemon/bin/nodemon.js init.js"
   },
   "author": "",
   "license": "ISC",
