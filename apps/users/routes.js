@@ -15,10 +15,6 @@ router.get('/schema.json', (req, res) => {
 	res.status(200).send(format(models.user.schema))
 });
 
-router.get('/blue', (req, res) => {
-  	res.status(200).json({ message: 'In Users Blue!' });
-});
-
 router.post('/', 
 	controllers.validateUser, 
 	controllers.createUser, 

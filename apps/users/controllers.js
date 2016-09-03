@@ -263,10 +263,12 @@ function hashUserPassword(user) {
 	})
 }
 
+
 module.exports = {
 	validateUser: validateUser,
 	getUser: getUser,
 	userAuthenticate: userAuthenticate,
 	createUser: createUser
 }
+
 

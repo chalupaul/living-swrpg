@@ -6,7 +6,7 @@
 	},
 	"database": {
 		"production": {
-			"uri": "mongodb://127.0.0.1:27017/swrpg",
+			"uri": "mongodb://127.0.0.1:27017/lswrpg",
 			"option": { 
 				"server": { 
 					"socketOptions": { 
@@ -23,7 +23,24 @@
 			}
 		},
 		"development": {
-			"uri": "mongodb://127.0.0.1:27017/swrpg",
+			"uri": "mongodb://127.0.0.1:27017/lswrpgDev",
+			"option": { 
+				"server": { 
+					"socketOptions": { 
+						"keepAlive": 300000, 
+						"connectTimeoutMS": 30000 
+					} 
+				}, 
+				"replset": { 
+					"socketOptions": { 
+						"keepAlive": 300000, 
+						"connectTimeoutMS" : 30000 
+					} 
+				} 
+			}
+		},
+		"test": {
+			"uri": "mongodb://127.0.0.1:27017/lswrpgTest",
 			"option": { 
 				"server": { 
 					"socketOptions": { 
