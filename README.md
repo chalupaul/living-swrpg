@@ -25,6 +25,7 @@ The mongo script is a trivial wrapper around a stock (homebrew)[http://brew.sh] 
 Typical order is:
 
 1. cp config.json.defaults config.json
+2. npm install
 2. Edit the config.json file as necessary.
 3. npm run mongo
 4. npm start 
