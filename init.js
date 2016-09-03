@@ -1,4 +1,6 @@
 // Set up root include path
+global.nodeEnvironment = (process.env.NODE_ENV) ? process.env.NODE_ENV : 'production';
+console.log("Starting server in", nodeEnvironment, "mode.");
 var path = require('path')
 global.getRootPath = function() {
 	return __dirname;

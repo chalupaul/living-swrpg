@@ -5,6 +5,39 @@
 		"tokenSecret": "Change me!"
 	},
 	"database": {
-		"uri": "mongodb://127.0.0.1:27017/swrpg"
+		"production": {
+			"uri": "mongodb://127.0.0.1:27017/swrpg",
+			"option": { 
+				"server": { 
+					"socketOptions": { 
+						"keepAlive": 300000, 
+						"connectTimeoutMS": 30000 
+					} 
+				}, 
+				"replset": { 
+					"socketOptions": { 
+						"keepAlive": 300000, 
+						"connectTimeoutMS" : 30000 
+					} 
+				} 
+			}
+		},
+		"development": {
+			"uri": "mongodb://127.0.0.1:27017/swrpg",
+			"option": { 
+				"server": { 
+					"socketOptions": { 
+						"keepAlive": 300000, 
+						"connectTimeoutMS": 30000 
+					} 
+				}, 
+				"replset": { 
+					"socketOptions": { 
+						"keepAlive": 300000, 
+						"connectTimeoutMS" : 30000 
+					} 
+				} 
+			}
+		}
 	}
 }
