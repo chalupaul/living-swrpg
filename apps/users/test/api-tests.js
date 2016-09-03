@@ -3,7 +3,7 @@ var chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 var should = chai.should();
 var MongoClient = require('mongodb').MongoClient
-var url = 'mongodb://localhost:27017/lswrpgTest';
+var url = 'mongodb://localhost:27017/lswrpgDev';
 
 var state = {};
 function create_user() {
@@ -12,13 +12,16 @@ function create_user() {
 
 describe('User', function() {
 	describe('#post /', function() {
-		afterEvery(function(done){
+		beforeEach(function(done) {
+			done();
+		})
+		afterEach(function(done){
 			MongoClient.connect(url, function(err, db) {
 				var collection = db.collection('users');
 				collection.remove({}, done);
 			});
 		})
-		it('should create a new user', function(){
+		it('should return 200 OK', function(){
 			chai.request('http://localhost:3000')
 			.post('/')
 			.send({

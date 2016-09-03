@@ -29,7 +29,7 @@ var DB = lib.getDatabase();
 app.use('/users', apps.users.routes);
 
 
-var port = lib.config.get('server.port')? Number(lib.config.get('server.port')) : 3000;
+var port = lib.config.server.port ? Number(lib.config.server.port) : 3000;
 app.listen(port, () => {
 	console.log("Server listening on port", port);
 });
