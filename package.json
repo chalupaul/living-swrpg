@@ -4,7 +4,9 @@
   "description": "living star wars rpg api",
   "main": "index.js",
   "scripts": {
-    "test": "node_modules/mocha/bin/mocha --recursive"
+    "test": "node_modules/mocha/bin/mocha apps/users/test",
+    "start-mongo": "mongod --config /usr/local/etc/mongod.conf",
+    "start": " source $HOME/.bash_profile; [[ -f .nvmrc ]] && nvm use; NODE_ENV=development node_modules/nodemon/bin/nodemon.js init.js"
   },
   "author": "",
   "license": "ISC",
@@ -29,10 +31,8 @@
   "devDependencies": {
     "blocked": "^1.2.1",
     "chai": "^3.5.0",
+    "chai-http": "^3.0.0",
     "mocha": "^3.0.2",
-    "mockery": "^1.7.0",
-    "mongodb": "^2.2.9",
-    "nodemon": "^1.10.2",
-    "sinon": "^1.17.5"
+    "nodemon": "^1.10.2"
   }
 }
