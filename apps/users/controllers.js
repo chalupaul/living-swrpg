@@ -30,7 +30,7 @@ function getUser(req, res, next) {
 				err = new Error('User not found.');
 				err.name = 'UserError';
 				err.statusCode = 404;
-				err.scope= 'swrpg';
+				err.scope= 'lswrpg';
 				err.error = {
 					"request": {
 						"upi": req.params.upi
@@ -69,7 +69,7 @@ function validateUser(req, res, next) {
 		})
 		.catch(function (err) {
 			err.name = 'ValidationError';
-			err.scope = 'swrpg';
+			err.scope = 'lswrpg';
 			err.statusCode = 400;
 			err.error = err.errors[0];
 			return next(err);
@@ -77,6 +77,54 @@ function validateUser(req, res, next) {
 	})
 }
 
+// Turn off a user account.
+function disableUser(req, res, next) {
+	return new Promise(function(resolve, reject) {
+		// Fetch user by upi
+		var upi = req.params.upi;
+		var User = models.user.model;
+		User.findOne({'upi':upi}, function(err, user) {
+			if (err) {reject(err);}
+			if (user == null) {
+				err = new Error('User not found.');
+				err.name = 'UserError';
+				err.statusCode = 404;
+				err.scope = 'lswrpg';
+				err.error = {
+					"request": {
+						"upi": upi
+					},
+					"message": err.message
+				};
+				reject(err);
+			} else {
+				resolve(user);
+			}
+		});		
+	})
+	.then(function(user) {
+		// Disable user
+		return new Promise(function(resolve, reject) {
+			user._adminDisabled = true;
+			user.save(function(error, object, numAffected) {
+				if (error) {
+					reject(error);
+				} else {
+					resolve(object);
+				}
+			});
+		});
+	})
+	.then(function(user) {
+		user.getUserSafe(function(err, safeVals) {
+			res.locals.user = safeVals;
+			next();
+		});
+	})
+	.catch(function(err) {
+		next(err);
+	})
+}
 
 // Create user objects and persist them in the database.
 function createUser(req, res, next) {
@@ -113,6 +161,7 @@ function createUser(req, res, next) {
 		})
 	}).then(function(user) {
 		//get baked user vars
+		console.log(user);
 		user.getUserSafe(function(err, safeVals) {
 			res.locals.user = safeVals;
 			next();
@@ -154,7 +203,7 @@ function userAuthenticate(req, res, next) {
 		user.getUserSafe(function(err, safeVals) {
 			return new Promise(function(resolve, reject) {
 				res.locals.user = safeVals;
-				lib.jwt.sign(res.locals.user, function(err, token) {
+				lib.encryption.sign(res.locals.user, function(err, token) {
 					if (err) {reject(err);}
 					res.locals.token = token;
 					next();
@@ -165,7 +214,7 @@ function userAuthenticate(req, res, next) {
 		if (err == false) {
 			// False is either "couldnt find this user", "user is unverified/disabled", or "bad password"
 			err = new Error('Username or Password incorrect.');
-			err.scope = 'swrpg';
+			err.scope = 'lswrpg';
 			err.name = 'AuthenticationError';
 			err.statusCode = 401;
 			err.error = {
@@ -178,7 +227,6 @@ function userAuthenticate(req, res, next) {
 		}
 		next(err);
 	});
-	
 }
 
 // Checks to make sure a login name is unique.
@@ -191,7 +239,7 @@ function ensureUniqueLogin(user) {
 				err = new Error('Login name already taken.');
 				err.statusCode = 400;
 				err.name = 'ValidationError';
-				err.scope = 'swrpg';
+				err.scope = 'lswrpg';
 				err.statusCode = 400;
 				err.error = {
 					"dataPath": ".loginName",
@@ -263,12 +311,55 @@ function hashUserPassword(user) {
 	})
 }
 
+// Sets a user._verified to true. 
+// Since this is clicked in email (and assumed to be unique), we can 
+// ignore auth *finger's crossed*
+function verifyHashedUpi(req, res, next) {
+	var hash = req.params.hash;
+	var decodedUpi = lib.encryption.decrypt(hash);
+	return new Promise(function(resolve, reject) {
+		var User = models.user.model;
+		var user = User.findOneAndUpdate({"upi":decodedUpi}, {$set: {'_verified': true}}, function(err, user) {
+			if (err) {reject(err);}
+			if (user == null) {
+				// boolean false
+				reject(false);
+			} else {
+				resolve(user);
+			}
+		});
+		
+	})
+	.then(function(user) {
+		res.locals.user = user;
+		next();
+	})
+	.catch(function(err) {
+		if (err == false) {
+			// False is probably "couldnt find the upi"
+			err = new Error('Invalid Email Link.');
+			err.scope = 'lswrpg';
+			err.name = 'UserError';
+			err.statusCode = 401;
+			err.error = {
+				"message": err.message,
+				"request": {
+					"verificationCode": hash,
+				}
+			}
+		}
+		next(err);
+	})
+}
+
 
 module.exports = {
 	validateUser: validateUser,
 	getUser: getUser,
 	userAuthenticate: userAuthenticate,
-	createUser: createUser
+	createUser: createUser,
+	disableUser: disableUser,
+	verifyHashedUpi: verifyHashedUpi
 }
 
 

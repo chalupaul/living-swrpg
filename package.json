@@ -4,7 +4,7 @@
   "description": "living star wars rpg api",
   "main": "index.js",
   "scripts": {
-    "test": "node_modules/mocha/bin/mocha apps/users/test",
+    "test": "NODE_ENV=${NODE_ENV:-development} node_modules/mocha/bin/mocha apps/users/test",
     "mongo": "mongod --config /usr/local/etc/mongod.conf",
     "start": "[[ -f $HOME/.bash_profile ]] && source $HOME/.bash_profile; [[ -f .nvmrc ]] && nvm use; NODE_ENV=development node_modules/nodemon/bin/nodemon.js init.js"
   },
@@ -32,6 +32,7 @@
     "blocked": "^1.2.1",
     "chai": "^3.5.0",
     "chai-http": "^3.0.0",
+    "chai-things": "^0.2.0",
     "mocha": "^3.0.2",
     "mongodb": "^2.2.9",
     "nodemon": "^1.10.2"

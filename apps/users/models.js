@@ -76,17 +76,25 @@ var UserSchema = {
 		"roles": {
 			"type": "array",
 			"minItems": 1,
+			"description": "Your roles and entitlements.",
 			"uniqueItems": true,
 			"default": ["user"],
 			"items": {
 				"enum": [
 					"emperor",
-					"user",
+					"dark lord",
+					"grand general",
+					"grand admiral",
+					"grand moff",
+					"inquisitor",
+					"moff",
+					"admiral",
+					"general",
 					"gm",
-					"organizer",
-					"writer",
-					"storeOwner",
-					"regionalCoordinator"
+					"stormtrooper",
+					"captain",
+					"user",
+					"store owner"
 				]
 			}
 		}

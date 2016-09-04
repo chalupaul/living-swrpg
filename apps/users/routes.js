@@ -24,12 +24,6 @@ router.post('/',
 );
 
 router.get('/:upi',
-	lib.jwt.jwtMiddleware,
-	function(req, res, next) {
-		res.locals.requiredRoles = ['user'];
-		next();
-	},
-	lib.rbac.authzMiddleware,
 	controllers.getUser,
 	function(req, res) {
 		res.status(200).send(res.locals.user);
@@ -39,12 +33,39 @@ router.get('/:upi',
 router.post('/auth',
 	controllers.userAuthenticate,
 	function(req, res) {
-		res.status(200).json(res.locals.token);
+		res.status(200).json({token: res.locals.token});
+	}
+)
+
+router.get('/disable/:upi',
+	lib.encryption.jwtMiddleware,
+	function(req, res, next) {
+		res.locals.requiredRoles = [
+			'emperor',
+			'dark lord',
+			'grand general',
+			'grand moff',
+			'grand admiral',
+			'inquisitor'
+		];
+		next();
+	},
+	lib.rbac.authzMiddleware,
+	controllers.disableUser,
+	function(req, res) {
+		res.status(200).json(res.locals.user);
+	}
+)
+
+router.get('/verify/:hash',
+	controllers.verifyHashedUpi,
+	function(req, res, next) {
+		res.status(200).json(res.locals.user);
 	}
 )
 
 router.use(function(err, req, res, next) {
-	if (err.hasOwnProperty('scope') && err.scope == 'swrpg') {
+	if (err.hasOwnProperty('scope') && err.scope == 'lswrpg') {
 		res.status(err.statusCode).json(err.error);
 	} else {
 		console.error(err);
