@@ -2,11 +2,8 @@ var models = require('./models');
 var controllers = require('./controllers');
 var router = require('express').Router();
 var lib = rootRequire('lib');
-var validate = require('jsonschema').validate;
 var format = require('json-format');
-var Ajv = require('ajv')
 
-var ajv = new Ajv({ useDefaults: true }); 
 var logger = lib.logger.logger
 
  

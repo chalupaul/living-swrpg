@@ -1,5 +1,5 @@
 // Set up root include path
-global.nodeEnvironment = (process.env.NODE_ENV) ? process.env.NODE_ENV : 'production';
+global.nodeEnvironment = (process.env.NODE_ENV == undefined) ? 'production' : process.env.NODE_ENV;
 console.log("Starting server in", nodeEnvironment, "mode.");
 var path = require('path')
 global.getRootPath = function() {
@@ -8,7 +8,6 @@ global.getRootPath = function() {
 global.rootRequire = function(name) {
     return require(__dirname + path.sep + name);
 }
-
 var cluster = require('cluster');
 
 if (cluster.isMaster) {

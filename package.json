@@ -4,7 +4,7 @@
   "description": "living star wars rpg api",
   "main": "index.js",
   "scripts": {
-    "test": "NODE_ENV=${NODE_ENV:-development} node_modules/mocha/bin/mocha apps/users/test",
+    "test": "NODE_ENV=${NODE_ENV:-development} node_modules/mocha/bin/mocha --recursive tests",
     "mongo": "mongod --config /usr/local/etc/mongod.conf",
     "start": "[[ -f $HOME/.bash_profile ]] && source $HOME/.bash_profile; [[ -f .nvmrc ]] && nvm use; NODE_ENV=development node_modules/nodemon/bin/nodemon.js init.js"
   },

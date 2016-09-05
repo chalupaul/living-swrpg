@@ -161,7 +161,6 @@ function createUser(req, res, next) {
 		})
 	}).then(function(user) {
 		//get baked user vars
-		console.log(user);
 		user.getUserSafe(function(err, safeVals) {
 			res.locals.user = safeVals;
 			next();

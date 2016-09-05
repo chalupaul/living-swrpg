@@ -1,13 +1,39 @@
 {
-	"server": {
-		"port": 3000,
-		"logfile": "./logs/all-logs.log",
-		"tokenSecret": "Change me!"
+	"production": {
+		"server": {
+			"port": 3000,
+			"logfile": "./logs/all-logs.log",
+			"siteUrl": "http://localhost:3000/",
+			"tokenSecret": "Change me!"
+		},
+		"database": {
+			"url": "mongodb://127.0.0.1:27017/lswrpg",
+			"options": { 
+				"server": { 
+					"socketOptions": { 
+						"keepAlive": 300000, 
+						"connectTimeoutMS": 30000 
+					} 
+				}, 
+				"replset": { 
+					"socketOptions": { 
+						"keepAlive": 300000, 
+						"connectTimeoutMS" : 30000 
+					} 
+				} 
+			}
+		}
 	},
-	"database": {
-		"production": {
-			"uri": "mongodb://127.0.0.1:27017/lswrpg",
-			"option": { 
+	"development": {
+		"server": {
+			"port": 3000,
+			"logfile": "./logs/all-logs.log",
+			"siteUrl": "http://localhost:3000/",
+			"tokenSecret": "Change me!"
+		},
+		"database": {
+			"url": "mongodb://127.0.0.1:27017/lswrpgDev",
+			"options": { 
 				"server": { 
 					"socketOptions": { 
 						"keepAlive": 300000, 
@@ -21,27 +47,18 @@
 					} 
 				} 
 			}
+		}
+	},
+	"test": {
+		"server": {
+			"port": 3000,
+			"logfile": "./logs/all-logs.log",
+			"siteUrl": "http://localhost:3000/",
+			"tokenSecret": "Change me!"
 		},
-		"development": {
-			"uri": "mongodb://127.0.0.1:27017/lswrpgDev",
-			"option": { 
-				"server": { 
-					"socketOptions": { 
-						"keepAlive": 300000, 
-						"connectTimeoutMS": 30000 
-					} 
-				}, 
-				"replset": { 
-					"socketOptions": { 
-						"keepAlive": 300000, 
-						"connectTimeoutMS" : 30000 
-					} 
-				} 
-			}
-		},
-		"test": {
-			"uri": "mongodb://127.0.0.1:27017/lswrpgTest",
-			"option": { 
+		"database": {
+			"url": "mongodb://127.0.0.1:27017/lswrpgTest",
+			"options": { 
 				"server": { 
 					"socketOptions": { 
 						"keepAlive": 300000, 

@@ -2,12 +2,11 @@ var path = require('path');
 var crypto = require('crypto');
 var chai = require('chai');
 var chaiHttp = require('chai-http');
-var jwt = require('jsonwebtoken');
 chai.use(chaiHttp);
 var should = chai.should();
 var expect = chai.expect;
 var MongoClient = require('mongodb').MongoClient
-var Validator = require('jsonschema').Validator;
+var jwt = require('jsonwebtoken');
 
 
 var pathSplit = __dirname.split(path.sep);
@@ -121,7 +120,7 @@ describe('User', function() {
 		it('should auto-populate roles as [user]', function(done) {
 			createUser(userBody, function(res) {
 				var body = JSON.parse(res.text);
-				body.roles.should.deep.equal(['user']);
+				body.roles.should.deep.equal(['player']);
 				done();
 			})
 		})
@@ -246,7 +245,7 @@ describe('User', function() {
 		
 		var user2 = duplicateUser(userBody);
 		user2.loginName = 'user2';
-		user2.roles = ['inquisitor', 'user'];
+		user2.roles = ['inquisitor', 'player'];
 		user2._verified = true;
 		
 		beforeEach(function(done) {
@@ -289,7 +288,7 @@ describe('User', function() {
 			MongoClient.connect(dbUrl, function(err, db) {
 				if(err) {done(err)};
 				var collection = db.collection('users');
-				collection.findOneAndUpdate({'upi':user2.upi}, {$set: {'roles': ['user']}}, function(err, r) {
+				collection.findOneAndUpdate({'upi':user2.upi}, {$set: {'roles': ['player']}}, function(err, r) {
 					userAuth(user2, function(res) {
 						user2.token = [
 							'Authorization',

@@ -1,11 +1,12 @@
 var createMongooseSchema = require('json-schema-to-mongoose');
 var mongoose = require('mongoose');
 var async = require('async');
+var lib= rootRequire('lib');
 
 var UserSchema = {
 	"$async": true,
 	"$schema": "http://json-schema.org/draft-04/schema#",
-	"id": "http://localhost:3000/users/schema.json",
+	"id": lib.config.server.siteUrl + "/users/schema.json",
 	"title": "Living Star Wars User Object",
 	"description": "Manages a user.",
 	"type": "object",
@@ -35,10 +36,7 @@ var UserSchema = {
 			"description": "Your Date of Birth YYYY-MM-DD",
 		},
 		"language": {
-			"enum": [
-				"en",
-				"es"
-			],
+			"enum": lib.staticData.languages,
 			"default": "en",
 			"description": "Language",
 		},
@@ -62,15 +60,7 @@ var UserSchema = {
 			"description": "Account disabled."
 		},
 		"homeRegion": {
-			"enum": [
-				"northeast",
-				"southeast",
-				"central",
-				"southcentral",
-				"northwest",
-				"southwest",
-				"noncontinental"
-			],
+			"enum": lib.staticData.regions,
 			"description": "Your home region",
 		},
 		"roles": {
@@ -78,24 +68,9 @@ var UserSchema = {
 			"minItems": 1,
 			"description": "Your roles and entitlements.",
 			"uniqueItems": true,
-			"default": ["user"],
+			"default": ["player"],
 			"items": {
-				"enum": [
-					"emperor",
-					"dark lord",
-					"grand general",
-					"grand admiral",
-					"grand moff",
-					"inquisitor",
-					"moff",
-					"admiral",
-					"general",
-					"gm",
-					"stormtrooper",
-					"captain",
-					"user",
-					"store owner"
-				]
+				"enum": lib.staticData.roles
 			}
 		}
 	},
