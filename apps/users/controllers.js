@@ -1,5 +1,4 @@
 var models = require('./models');
-var async = require('async');
 var lib = rootRequire('lib');
 
 
@@ -44,7 +43,7 @@ function getUser(req, res, next) {
 	})
 	.then(function(user) {
 		//get baked user vars
-		user.getUserSafe(function(err, safeVals) {
+		lib.sanitizeReturn(user, function(err, safeVals) {
 			res.locals.user = safeVals;
 			next();
 		});
@@ -116,7 +115,7 @@ function disableUser(req, res, next) {
 		});
 	})
 	.then(function(user) {
-		user.getUserSafe(function(err, safeVals) {
+		lib.sanitizeReturn(user, function(err, safeVals) {
 			res.locals.user = safeVals;
 			next();
 		});
@@ -152,7 +151,7 @@ function createUser(req, res, next) {
 		})
 	}).then(function(user) {
 		//get baked user vars
-		user.getUserSafe(function(err, safeVals) {
+		lib.sanitizeReturn(user, function(err, safeVals) {
 			res.locals.user = safeVals;
 			next();
 		});
@@ -190,7 +189,7 @@ function userAuthenticate(req, res, next) {
 			})
 		})
 	}).then(function(user) {
-		user.getUserSafe(function(err, safeVals) {
+		lib.sanitizeReturn(user, function(err, safeVals) {
 			return new Promise(function(resolve, reject) {
 				res.locals.user = safeVals;
 				lib.encryption.sign(res.locals.user, function(err, token) {

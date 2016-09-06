@@ -1,7 +1,10 @@
-var models = require('./models');
-var User = rootRequire('apps/users').models.user.model;
+var Ajv = require('ajv');
+var uuid = require('node-uuid');
+var ajv = new Ajv({ useDefaults: true, loadSchema: loadSchema });
 var async = require('async');
 var lib = rootRequire('lib');
+var models = require('./models');
+var User = rootRequire('apps/users').models.user.model;
 
 function loadSchema(uri, callback) {
     request.json(uri, function(err, res, body) {
@@ -46,12 +49,74 @@ function validateAdventure(req, res, next) {
 	})
 }
 
-function createAdventure(req, res, next) {
+function getAdventure(req, res, next) {
+	console.log("HIT HERE");
 	return new Promise(function(resolve, reject) {
+		console.log("INSIDE PROMISE");
+		var uuid = req.params.uuid;
+		var Adventure = models.adventure.model;
+		Adventure.findOne({"uuid":uuid}, function(err, adv) {
+			console.log(adv)
+			if (err) {reject(err);}
+			if (adv == null) {
+				err = new Error('Adventure ID not found.');
+				err.name = 'AdventureError';
+				err.statusCode = 404;
+				err.scope= 'lswrpg';
+				err.error = {
+					"request": {
+						"uuid": uuid
+					},
+					"message": err.message
+				}
+				reject(err);
+			}
+			resolve(adv);
+		})
+	})
+	.then(function(adventure) {
+		lib.sanitizeReturn(adventure, function(err, safeVals) {
+			res.locals.adventure = safeVals;
+			next();
+		});
+	})
+	.catch(function(err) {
+		next(err);
+	})
+}
+
+function createAdventure(req, res, next) {
+	new Promise(function(resolve, reject) {
 		// pop off new adventure
 		resolve(req.body)
 	})
 	.then(function(adventure) {
-		var Adventure = models.adventure.model;
+		return new Promise(function(resolve, reject) {
+			var Adventure = models.adventure.model;
+			var a = new Adventure(adventure);
+			a.uuid = uuid.v4();
+			a.save(function(error, object, numAffected) {
+				if (error) {
+					reject(error);
+				} else {
+					resolve(object);
+				}
+			})
+		})
 	})
+	.then(function(adventure) {
+		lib.sanitizeReturn(adventure, function(err, safeVals) {
+			res.locals.adventure = safeVals;
+			next();
+		});
+	})
+	.catch(function(err) {
+		next(err);
+	});
+}
+
+module.exports = {
+	validateAdventure: validateAdventure,
+	createAdventure: createAdventure,
+	getAdventure: getAdventure
 }

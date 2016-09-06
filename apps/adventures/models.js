@@ -8,7 +8,7 @@ var AdventureSchema = {
 	"$async": true,
 	"$schema": "http://json-schema.org/draft-04/schema#",
 	"id": lib.config.server.siteUrl + "/adventures/schema.json",
-	"title": "Living Star Wars User Object",
+	"title": "Living Star Wars Adventure Object",
 	"description": "Manages an adventure.",
 	"type": "object",
 	"properties": {
@@ -20,6 +20,10 @@ var AdventureSchema = {
 		"author": {
 			"type": "number",
 			"description": "Author's UPI number"
+		},
+		"uuid": {
+			"type": "string",
+			"description": "Adventure UUID, v4 format"
 		},
 		"season": {
 			"enum": lib.staticData.seasons.map(function(a) {return a.name;}),
@@ -48,7 +52,7 @@ var AdventureSchema = {
 			"description": "Flag to toggle visibility/availability of adventure",
 			"default": false
 		},
-		"_sepcialMission": {
+		"_specialMission": {
 			"type": "boolean",
 			"description": "Inquisitors and above can have special missions that only they can GM",
 			"default": false
@@ -64,6 +68,7 @@ var refs = {};
 
 var getModel = function() {
 	var mongooseSchema = createMongooseSchema(refs, AdventureSchema);
+	mongooseSchema.uuid.index = true;
 	var Schema = new mongoose.Schema(mongooseSchema);
 	return mongoose.model('Adventure', Schema)
 }

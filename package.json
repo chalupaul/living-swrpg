@@ -24,6 +24,7 @@
     "jsonwebtoken": "^7.1.9",
     "mkdirp": "^0.5.1",
     "morgan": "^1.7.0",
+    "node-uuid": "^1.4.7",
     "path": "^0.12.7",
     "steeltoe": "^1.0.1",
     "winston": "^2.2.0"
