@@ -17,10 +17,6 @@ var AdventureSchema = {
 			"maxLength": 140,
 			"description": "Adventure Name",
 		},
-		"adventureId": {
-			"type": "string",
-			"description": "Unique adventure ID"
-		},
 		"author": {
 			"type": "number",
 			"description": "Author's UPI number"
@@ -57,7 +53,10 @@ var AdventureSchema = {
 			"description": "Inquisitors and above can have special missions that only they can GM",
 			"default": false
 		}
-	}
+	},
+	"required": [
+		"name", "author", "season", "summary", "summaryBrief", "region", "pdfUrl", 
+	]
 }
 
 var refs = {};

@@ -142,15 +142,6 @@ function createUser(req, res, next) {
 		return new Promise(function(resolve, reject) {
 			var User = models.user.model;
 			u = new User(user);
-			resolve(u);
-		});
-	}).then(function(user){
-		// Save user
-		// Takes in a mongoose model of a user
-		// Outputs a mongoose document instance of a user
-		return new Promise(function(resolve, reject) {
-			var User = models.user.model;
-			u = new User(user);
 			u.save(function(error, object, numAffected) {
 				if (error) {
 					reject(error);

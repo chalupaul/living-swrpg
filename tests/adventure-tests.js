@@ -4,6 +4,7 @@ var chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 var should = chai.should();
 var expect = chai.expect;
+var MongoClient = require('mongodb').MongoClient
 
 var pathSplit = __dirname.split(path.sep);
 for (let i = 0; i < pathSplit.length; i++) {
@@ -22,6 +23,18 @@ var siteUrl = 'http://localhost:' + configRaw.server.port;
 
 
 describe('Adventure', function() {
+	afterEach(function(done){
+		MongoClient.connect(dbUrl, function(err, db) {
+			if(err) {done(err)};
+			var User = db.collection('users');
+			User.remove({}, function() {
+				var Adventure = db.collection('adventures');
+				Adventure.remove({}, function() {
+					done();
+				})
+			});
+		});
+	});
 	describe('#schema', function() {
 		it('should return json schema', function(done) {
 			chai.request(siteUrl)
