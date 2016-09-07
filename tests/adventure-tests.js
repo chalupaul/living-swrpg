@@ -74,7 +74,7 @@ describe('Adventure', function() {
 			.post('/adventures/')
 			.send(testAdventure)
 			.end(function(err, res) {
-				res.should.have.status(401);
+				res.should.have.status(403);
 				done();
 			})
 		});
@@ -92,7 +92,7 @@ describe('Adventure', function() {
 					.post('/adventures')
 					.send(adv)
 					.end(function(err, res) {
-						res.should.have.status(401);
+						res.should.have.status(403);
 						done();
 					})
 				});
@@ -115,16 +115,164 @@ describe('Adventure', function() {
 			});
 		});
 		it('should not provide a download link if the user is just a player', function(done) {
-			done();
+			// This test is kind of the definition of callback hell.
+			common.createAdventure(testAdventure, testUser.token, function(res) {
+				var uuid = JSON.parse(res.text).uuid;
+				var player = common.duplicateObject(common.userBody);
+				player._verified = true;
+				player.roles = ['player'];
+				player.loginName = 'readonlyTestuser';
+				common.createUser(player, function(res) {
+					player.upi = JSON.parse(res.text).upi;
+					// Now auth for a token for our player-only user
+					common.userAuth(player, function(res) {
+						player.token = JSON.parse(res.text).token;
+						common.getAdventure(uuid, player.token, function(res) {
+							//Make sure it works for players
+							res.should.have.status(200);
+							var body = JSON.parse(res.text);
+							body.pdfUrl.should.equal('');
+							done();
+						});
+					});
+				});
+			});
 		});
+		it('should not provide a download link if the user is a gm outside the region', function(done) {
+			common.createAdventure(testAdventure, testUser.token, function(res) {
+				var uuid = JSON.parse(res.text).uuid;
+				var player = common.duplicateObject(common.userBody);
+				player._verified = true;
+				player.roles = ['player', 'gm'];
+				player.homeRegion = 'noncontinental';
+				player.loginName = 'naughtyGmTest';
+				common.createUser(player, function(res) {
+					player.upi = JSON.parse(res.text).upi;
+					// Now auth for a token for our player-only user
+					common.userAuth(player, function(res) {
+						player.token = JSON.parse(res.text).token;
+						common.getAdventure(uuid, player.token, function(res) {
+							//Make sure it works for players
+							res.should.have.status(200);
+							var body = JSON.parse(res.text);
+							body.pdfUrl.should.equal('');
+							done();
+						});
+					});
+				});
+			});
+		})
+		it('should provide a download link if the user is a gm in the same region', function(done) {
+			common.createAdventure(testAdventure, testUser.token, function(res) {
+				var uuid = JSON.parse(res.text).uuid;
+				var player = common.duplicateObject(common.userBody);
+				player._verified = true;
+				player.roles = ['player', 'gm'];
+				player.loginName = 'niceGmTest';
+				common.createUser(player, function(res) {
+					player.upi = JSON.parse(res.text).upi;
+					// Now auth for a token for our player-only user
+					common.userAuth(player, function(res) {
+						player.token = JSON.parse(res.text).token;
+						common.getAdventure(uuid, player.token, function(res) {
+							//Make sure it works for players
+							res.should.have.status(200);
+							var body = JSON.parse(res.text);
+							body.pdfUrl.should.not.equal('');
+							done();
+						});
+					});
+				});
+			});
+		})
 		it('should fail if passed a bad uuid', function(done) {
-			done();
+			common.getAdventure("12345-12345-12345", testUser.token, function(res) {
+				res.should.have.status(404);
+				done();
+			});
 		});
-		it('should fail if made by an anonymous user', function(done) {
-			done();
+		it('should not provide a download link for anonymous users', function(done) {
+			common.createAdventure(testAdventure, testUser.token, function(res) {
+				var uuid = JSON.parse(res.text).uuid;
+				chai.request(common.siteUrl)
+				.get('/adventures/' + uuid)
+				.end(function(err, res) {
+					res.should.have.status(200);
+					var body = JSON.parse(res.text);
+					body.pdfUrl.should.equal('');
+					done();
+				});
+			});
 		});
-		it('should fail if no jwt header', function(done) {
-			done();
+	});
+	describe('#update', function() {
+		beforeEach(function(done) {
+			adventureBoilerPlate(function() {
+				common.createAdventure(testAdventure, testUser.token, function(res) {
+					testAdventure.uuid = JSON.parse(res.text).uuid;
+					done();
+				});
+			});
+		});
+		it('should update an adventure', function(done) {
+			var testAdventure2 = common.duplicateObject(testAdventure);
+			testAdventure2.name = "Name is Changed";
+			common.updateAdventure(testAdventure.uuid, testAdventure2, testUser.token, function(res) {
+				var body = JSON.parse(res.text);
+				res.should.have.status(200);
+				body.name.should.equal(testAdventure2.name);
+				done();
+			})
+		});
+		it('should not update uuid field', function(done) {
+			var testAdventure2 = common.duplicateObject(testAdventure);
+			testAdventure2.name = "Name is Changed";
+			testAdventure2.uuid = "12345-12345-12345";
+			common.updateAdventure(testAdventure.uuid, testAdventure2, testUser.token, function(res) {
+				var body = JSON.parse(res.text);
+				res.should.have.status(200);
+				body.uuid.should.equal(testAdventure.uuid);
+				done();
+			});
+		})
+		it('should fail if the uuid is not found', function(done) {
+			var testAdventure2 = common.duplicateObject(testAdventure);
+			testAdventure2.name = "Name is Changed";
+			common.updateAdventure("12345-12345-123", testAdventure2, testUser.token, function(res) {
+				var body = JSON.parse(res.text);
+				res.should.have.status(404);
+				done();
+			});
+		});
+		it('should fail if no jwt headers are sent', function(done) {
+			var testAdventure2 = common.duplicateObject(testAdventure);
+			
+			chai.request(common.siteUrl)
+			.post('/adventures/' + testAdventure.uuid)
+			.send(testAdventure2)
+			.end(function(err, res) {
+				res.should.have.status(403);
+				done();
+			});
+		});
+		it('should fail if the user is not allowed to update', function(done) {
+			var testAdventure2 = common.duplicateObject(testAdventure);
+			var user1 = common.duplicateObject(common.userBody);
+			user1._verified = true;
+			user1.loginName = 'naughtyTestUser';
+			user1.roles = ["player"];
+			common.createUser(user1, function(res) {
+				user1.upi = JSON.parse(res.text).upi;
+				// Now auth for a token
+				common.userAuth(user1, function(res) {
+					user1.token = JSON.parse(res.text).token;
+					common.updateAdventure(testAdventure.uuid, testAdventure2, user1.token, function(res) {
+						var body = JSON.parse(res.text);
+						res.should.have.status(403);
+						done();
+					});
+				});
+			});
 		});
 	});
 });

@@ -50,13 +50,10 @@ function validateAdventure(req, res, next) {
 }
 
 function getAdventure(req, res, next) {
-	console.log("HIT HERE");
 	return new Promise(function(resolve, reject) {
-		console.log("INSIDE PROMISE");
 		var uuid = req.params.uuid;
 		var Adventure = models.adventure.model;
 		Adventure.findOne({"uuid":uuid}, function(err, adv) {
-			console.log(adv)
 			if (err) {reject(err);}
 			if (adv == null) {
 				err = new Error('Adventure ID not found.');
@@ -73,6 +70,36 @@ function getAdventure(req, res, next) {
 			}
 			resolve(adv);
 		})
+	})
+	.then(function(adventure) {
+		return new Promise(function(resolve, reject) {
+			// Only going to show the pdfUrl if the user should see them. This is
+			// ridiculously long for such a simple function.
+			var validRoles = lib.staticData.adventureDownloaders;
+			var roles = ('roles' in res.locals.decodedToken) ? res.locals.decodedToken['roles'] : new Array();
+			var userRegion = ('homeRegion' in res.locals.decodedToken) ? res.locals.decodedToken['homeRegion'] : '';
+			async.any(
+				roles,
+				function(role, callback){
+					var truthity = validRoles.indexOf(role) != -1;
+					callback(null, truthity);
+				},
+				function(err, result){
+					var visibleDownload = false;
+					if (result) {
+						// Can get any download
+						visibleDownload = true;
+					} else if (roles.includes('gm') && adventure.region == userRegion) {
+						// Only make visible if its a same region GM.
+						visibleDownload = true;
+					}
+					if (visibleDownload == false) {
+						adventure.pdfUrl = '';
+					}
+					resolve(adventure);
+				}
+			);	
+		});
 	})
 	.then(function(adventure) {
 		lib.sanitizeReturn(adventure, function(err, safeVals) {
@@ -115,8 +142,97 @@ function createAdventure(req, res, next) {
 	});
 }
 
+function updateAdventure(req, res, next) {
+	var uuid = req.params.uuid;
+	var Adventure = models.adventure.model;
+	return new Promise(function(resolve, reject) {
+		if (req.body == {}) {
+			var err = new Error('No update submitted');
+			err.name = 'AdventureError';
+			err.statusCode = 401;
+			err.scope= 'lswrpg';
+			err.error = {
+				"request": {
+					"uuid": uuid,
+					"request": req.body
+				},
+				"message": err.message
+			}
+			reject(err);
+		}
+		var allowedKeys = Object.keys(models.adventure.schema.properties);
+		async.filter(
+			allowedKeys, 
+			function(k, callback) {
+				callback(null, (k != 'uuid'));
+			},
+			function(err, res) {
+				if(err) {
+					reject(err);
+				} else {
+					resolve(res);
+				}
+			}
+		)
+	})
+	.then(function(allowedKeys) {
+		return new Promise(function(resolve, reject) {
+			var adv = {};
+			async.each(
+				Object.keys(req.body),
+				function(k, callback) {
+					if (allowedKeys.includes(k)) {
+						adv[k] = req.body[k];
+					}
+					callback();
+				},
+				function(err) {
+					if(err) {
+						reject(err);
+					} else {
+						// Should have all the safe vals.
+						resolve(adv);
+					}
+				}
+			)	
+		})
+	})
+	.then(function(adventure) {
+		return new Promise(function(resolve, reject) {
+			Adventure.findOneAndUpdate({"uuid":uuid}, {$set: adventure}, function(err, adv) {
+				if (err) {reject(err);}
+				if (adv == null) {
+					err = new Error('Adventure ID not found.');
+					err.name = 'AdventureError';
+					err.statusCode = 404;
+					err.scope= 'lswrpg';
+					err.error = {
+						"request": {
+							"uuid": uuid
+						},
+						"message": err.message
+					}
+					reject(err);
+				}
+				resolve(adv);
+			});
+		})
+	})
+	.then(function(adventure) {
+		// Probably unnecessary, but better safe than sorry.
+		lib.sanitizeReturn(adventure, function(err, safeVals) {
+			res.locals.adventure = safeVals;
+			next();
+		});
+	})
+	.catch(function(err) {
+		next(err);
+	})
+}
+
 module.exports = {
 	validateAdventure: validateAdventure,
 	createAdventure: createAdventure,
-	getAdventure: getAdventure
+	getAdventure: getAdventure,
+	updateAdventure: updateAdventure
 }

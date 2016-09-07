@@ -56,6 +56,16 @@ function getAdventure(uuid, token, callback) {
 	})
 }
 
+function updateAdventure(uuid, adventure, token, callback) {
+	chai.request(siteUrl)
+	.post('/adventures/' + uuid)
+	.send(adventure)
+	.set('Authorization', 'Bearer ' + token)
+	.end(function(err, res) {
+		callback(res);
+	})
+}
+
 function createUser(userObj, callback) {
 	chai.request(siteUrl)
 	.post('/users/')
@@ -102,5 +112,6 @@ module.exports = {
 	disableUser: disableUser,
 	userAuth: userAuth,
 	duplicateObject: duplicateObject,
-	getAdventure: getAdventure
+	getAdventure: getAdventure,
+	updateAdventure: updateAdventure
 }

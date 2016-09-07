@@ -15,14 +15,7 @@ router.get('/schema.json', (req, res) => {
 router.post('/',
 	lib.encryption.jwtMiddleware,
 	function(req, res, next) {
-		res.locals.requiredRoles = [
-			'emperor',
-			'dark lord',
-			'grand general',
-			'grand moff',
-			'grand admiral',
-			'inquisitor'
-		];
+		res.locals.requiredRoles = lib.staticData.writers;
 		next();
 	},
 	lib.rbac.authzMiddleware,
@@ -40,11 +33,23 @@ router.get('/:uuid',
 		res.locals.requiredRoles = lib.staticData.roles;
 		next();
 	},
-	lib.rbac.authzMiddleware,
 	controllers.getAdventure,
 	function(req, res) {
 		res.status(200).json(res.locals.adventure);
-//		res.status(200).json({"hi"})
+	}
+)
+
+router.post('/:uuid',
+	lib.encryption.jwtMiddleware,
+	function(req, res, next) {
+		res.locals.requiredRoles = lib.staticData.writers;
+		next();
+	},
+	lib.rbac.authzMiddleware,
+	controllers.validateAdventure, 
+	controllers.updateAdventure, 
+	function(req, res) {
+		res.status(200).json(res.locals.adventure);
 	}
 )
 
@@ -54,7 +59,7 @@ router.use(function(err, req, res, next) {
 	} else {
 		console.error(err);
 		// Don't let users see anything they shouldn't.
-		res.status(500).json({"message":"An unknown error has occured."})
+		res.status(500).json({"message":"An unknown error has occured."});
 	}
 });
 
